@@ -16,7 +16,13 @@ The first optional parameter (function to compute influence over an edge) can be
 xi_old, xi_new, xj_old, xj_new are the properties of the two nodes (old and new) to compute the similarity on. Those values need to be pandas dataframe, and can be of lenght >=1. The default algorithms assumes a len == 1. The customized algorithm can handle it differently.
 In particular, the default algorithm assumes that each row in X is a node with it's list of properties. However, by customizing the similarity function X can also be a list of <userid, property name, property value, timeframe ...> to allow having different properties for each node. In this case, the influence is computed only on shared properties.
 
-NodeInfluence
+NodeInfluence computes the influence for every node from the edge influence. Since every time influence occurs one end is the influencer and the other end is the susceptible node. Therefore, the influence score on the edge is positive from one oned and negative for the other. 
+By convention, for each edge e=(u,v), with id(u) < id(v), and influence exerted edge_inf(e), edge_inf(e,u) = edge_inf(e) and edge_inf(e,v) = -edge_inf(e).
+The NodeInfluence class has an additional parameter consider_susceptibility, which is false by default.
+consider_susceptibility = False computes the influence score of the node according to the paper [1]. #Destiny
+consider_susceptibility = True computes the influence score of the node according to the paper [2], in which the influence score also encloses the susceptibility of the neighbors. In this case, multiple iterations (at least 2) of the algorithm are needed. #Journal - further details TBD
+
+
 
 
 
