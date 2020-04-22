@@ -16,13 +16,19 @@ from scipy.signal import find_peaks
 
 class EdgeInfluenceDetection:
     
-    def __init__(self, E, X, computing_influence, 
+    def __init__(self, E, X, computing_influence, dynamic = True,
                  threshold = 0.80, balance_inf = True):
         self.E = E
         self.X = X
         self.computing_influence = computing_influence
         self.threshold = threshold
         self.balance = balance_inf
+        
+        if dynamic:
+            self.job = self.dynamic_net_job
+        else:
+            self.jon = self.static_net_job
+        
         
     def balance_influence(self, influence, w):
         inf_perc_20 = influence * 10 /100
@@ -33,7 +39,44 @@ class EdgeInfluenceDetection:
         #so, no penality
         return float(influence - (inf_perc_20 * (1 - math.log(w + 1, 2)/w)))
     
-    def job(self, E_slice, X):
+    
+    def static_net_job(self, E_slice, X):
+       
+        E_slice.loc[:,'influence'] = 0
+        for e in E_slice.index.unique():
+            
+            influence = 0
+            timeframes =  X.timeframe.unique().values
+            timeframes.sort()
+            i = min(e[0], e[1])
+            j = max(e[0], e[1])
+            
+            prev_tf = timeframes[0]
+            
+            for tf in timeframes[1:]:
+                xi_old = X.loc[[(X.characterId == i) & list(X.timeframe == prev_tf)][0], :]
+                xj_old = X.loc[[(X.characterId == j) & list(X.timeframe == prev_tf)][0], :]
+                xi_new = X.loc[[(X.characterId == i) & list(X.timeframe == tf)][0], :]
+                xj_new = X.loc[[(X.characterId == j) & list(X.timeframe == tf)][0], :]
+    		
+            
+                influence = self.computing_influence(xi_old, xi_new, 
+                                                 xj_old, xj_new, 
+                                                 self.threshold,
+                                                 influence)
+            
+                if(self.balance):
+                    influence = self.balance_influence(influence, 
+                                                       len(timeframes))
+                    
+                E_slice.loc[e,'influence'] = influence
+                
+                prev_tf = tf  
+                
+        return E_slice
+    
+    
+    def dynamic_net_job(self, E_slice, X):
        
         E_slice.loc[:,'influence'] = 0
         for e in E_slice.index.unique():
@@ -75,6 +118,7 @@ class EdgeInfluenceDetection:
                 
         return E_slice
             
+    
     def __call__(self, filename, n_workers):
         edge_list = self.E.index.unique()
         size = len(edge_list)
