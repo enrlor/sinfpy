@@ -27,18 +27,17 @@ In particular, the default algorithm assumes that each row in X is a node with i
 NodeInfluence computes the influence for every node from the edge influence. Since every time influence occurs one end is the influencer and the other end is the susceptible node. Therefore, the influence score on the edge is positive from one oned and negative for the other. 
 By convention, for each edge e=(u,v), with id(u) < id(v), and influence exerted edge_inf(e), edge_inf(e,u) = edge_inf(e) and edge_inf(e,v) = -edge_inf(e).
 The NodeInfluence class has an additional parameter consider_susceptibility, which is false by default.
-consider_susceptibility = False computes the influence score of the node according to the paper [1]. #Destiny
-consider_susceptibility = True computes the influence score of the node according to the paper [2], in which the influence score also encloses the susceptibility of the neighbors. In this case, multiple iterations (at least 2) of the algorithm are needed. #Journal - further details TBD
+consider_susceptibility = False computes the influence score of the node according to the paper (1). #Destiny
+consider_susceptibility = True computes the influence score of the node according to the paper (2), in which the influence score also encloses the susceptibility of the neighbors. In this case, multiple iterations (at least 2) of the algorithm are needed. #Journal - further details TBD
 
 #TODO: add influence adjusted
 
 ## Requirements
- 1. Python 3
- 2. NumPy
- 3. Pandas
- 4. multiprocessing
- 5. math
- 6. scipy
+1. Python 3
+2. NumPy
+3. Pandas
+4. multiprocessing
+5. scipy
 
 ## Installation
 python
@@ -53,5 +52,5 @@ import sinfpy
 ## Examples - compute influence scores
 
 ## Reference(s)
- 1. Loria, E., Pirker, J., Drachen, A., & Marconi, A (2020, August). Do Influencers Influence? -- Analyzing Players' Activity in an Online Multiplayer Game. In 2020 IEEE Conference on Games (CoG) (in press). IEEE.
+1. Loria, E., Pirker, J., Drachen, A., & Marconi, A (2020, August). Do Influencers Influence? -- Analyzing Players' Activity in an Online Multiplayer Game. In 2020 IEEE Conference on Games (CoG) (in press). IEEE.
 
