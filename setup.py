@@ -14,7 +14,6 @@ setup(
         'numpy',
         'pandas',
         'multiprocessing',
-        'math',
         'scipy'
       ],
   classifiers=[

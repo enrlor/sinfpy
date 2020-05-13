@@ -61,7 +61,7 @@ def participation_influence(xi_old, xi_new, xj_old, xj_new, prev_inf, threshold)
         (sim_i > threshold and sim_j <= threshold):
             influence = sim_ij if sim_i > sim_j else -sim_ij
     
-    return influence  
+    return influence
 
 
 if __name__ == '__main__':
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     print('READY')
     
     E, X = filereader(fname)
-    ei = sinf.EdgeInfluence(E, X, participation_influence) 
+    ei = sinf.EdgeInfluence(E, X, participation_influence)
                             
     updated_E = ei(workers)
     
@@ -84,7 +84,6 @@ if __name__ == '__main__':
         
     ni = sinf.NodeInfluence(updated_E, stats = True)
     influences = ni(workers)
-    
     print('NODE INFLUENCE COMPUTED')
 
     with pd.HDFStore(fout) as hdf:

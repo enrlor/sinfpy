@@ -15,7 +15,7 @@ from sinfpy.utils import number_of_peaks
 
 class EdgeInfluence:
     #Initialization of the algorithm to compute the influence at the edge level.
-    #E                      is the table of edges in the form of <p1, p2, timeframe, weight>. 
+    #E                      is the table of edges in the form of <p1, p2, timeframe, weight>.
     #                       the table is indexed by (p1,p2)
     #X                      is the attributes table in the form of <characterId, attributes_list..., timeframe>
     #computing_influence    is the function used to compute the edge influence from similarity.
@@ -43,8 +43,8 @@ class EdgeInfluence:
         else:
             self.jon = self.static_net_job
         
-    #In case the parameter balance_inf is true, the influence value is adjusted according 
-    # to the edge's weight, using a logarithmic function     
+    #In case the parameter balance_inf is true, the influence value is adjusted according
+    # to the edge's weight, using a logarithmic function
     def balance_influence(self, influence, weight, penality = 0.1):
         penalized_inf = influence * penality
         return float(influence - (penalized_inf * (1 - math.log(weight + 1, 2)/weight)))
@@ -76,7 +76,7 @@ class EdgeInfluence:
                                                  influence)
             
                 if(self.balance):
-                    influence = self.balance_influence(influence, 
+                    influence = self.balance_influence(influence,
                                                        len(timeframes))
                     
                 E_slice.loc[e,'influence'] = influence
@@ -109,7 +109,7 @@ class EdgeInfluence:
                 xi_new = X.loc[[(X.characterId == i) & list(X.timeframe == tf)][0], :]
                 xj_new = X.loc[[(X.characterId == j) & list(X.timeframe == tf)][0], :]
     		
-                influence = self.computing_influence(xi_old, xi_new, 
+                influence = self.computing_influence(xi_old, xi_new,
                                                  xj_old, xj_new, 
                                                  self.threshold,
                                                  influence)
@@ -125,7 +125,7 @@ class EdgeInfluence:
                 
         return E_slice
             
-    #When the object is called the edge influence is computed. 
+    #When the object is called the edge influence is computed.
     #The algorithm supports multiprocessing, so the number of available workers can be specified.
     #The default is None.
     #It returns the updated table of edges E with the edge influence scores.
@@ -149,8 +149,8 @@ class EdgeInfluence:
 
             #last worker size may be bigger
             start_index = (n_workers - 1)*load
-            edge_list_slice = edge_list[start_index:] 
-            E_slice = self.E.loc[edge_list_slice,:] 
+            edge_list_slice = edge_list[start_index:]
+            E_slice = self.E.loc[edge_list_slice,:]
             workers.append(pool.apply_async(self.job, (E_slice, self.X)))
 
         updated_E = None
@@ -201,12 +201,12 @@ class NodeInfluence:
             
         return influence_scores
     
-    #When the object is called the node influence is computed. 
+    #When the object is called the node influence is computed.
     #The algorithm supports multiprocessing, so the number of available workers can be specified.
     #The default is None.
     #It returns a table with the list of nodes and the influence score, as the stats if the param is True.
     def __call__(self, n_workers = None):
-        nodes_list = list(set(self.E.p1.tolist() + 
+        nodes_list = list(set(self.E.p1.tolist() +
                         self.E.p2.tolist()))
         size = len(nodes_list)
         load = int(size/n_workers)
@@ -222,7 +222,7 @@ class NodeInfluence:
             #dividing the node list in n_workers - 1 slices
             nodes_list_slices = [nodes_list[start_index:start_index+load] \
                 for start_index in range(0, (n_workers - 1)*load, load)]
-            #dividing the edge list in n_workers - 1 slices according to the 
+            #dividing the edge list in n_workers - 1 slices according to the
             #prior division of the nodes list
             edge_list_slices = [self.E.iloc[[ (a in nslice or b in nslice) \
                         for a,b in zip(self.E.p1,self.E.p2)],:] \
@@ -233,10 +233,10 @@ class NodeInfluence:
       
             #last worker size may be bigger
             start_index = (n_workers - 1)*load
-            nodes_list_slice = nodes_list[start_index:] 
+            nodes_list_slice = nodes_list[start_index:]
             E_slice = self.E.iloc[[ (a in nodes_list_slice or b in nodes_list_slice) \
                                     for a,b in zip(self.E.p1,self.E.p2)],:]
-            workers.append(pool.apply_async(self.job, (nodes_list_slice, E_slice)))            
+            workers.append(pool.apply_async(self.job, (nodes_list_slice, E_slice)))        
         
         influence_scores = None
         for worker in workers:
@@ -244,9 +244,7 @@ class NodeInfluence:
             if influence_scores is None:
                 influence_scores = worker.get()
             else:
-                influence_scores = influence_scores.append(worker.get()) 
+                influence_scores = influence_scores.append(worker.get())
         pool.close()
         
         return influence_scores
-
-    

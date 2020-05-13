@@ -5,8 +5,7 @@ Created on Wed Apr 22 10:25:59 2020
 
 @author: fbk_user
 """
-import numpy as np 
-import math
+import numpy as np
 from scipy.signal import find_peaks
 
 #Computing the cosine similarity between two property vectors.
