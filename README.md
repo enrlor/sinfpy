@@ -1,9 +1,9 @@
-## Influence Detection
-[![PyPI version](https://badge.fury.io/py/smogn.svg)](https://badge.fury.io/py/smogn)
+## Detecting Semantic Influential Nodes in Time-Evolving Graphs
+[![PyPI version](https://badge.fury.io/py/smogn.svg)](https://badge.fury.io/py/sinfpy)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Build Status](https://travis-ci.com/nickkunz/smogn.svg?branch=master)](https://travis-ci.com/enrlor/InfluenceDetection)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bfe5a201f3b4a9787c6cf4b365736ed)](https://www.codacy.com/manual/enrlor/InfluenceDetection?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nickkunz/smogn&amp;utm_campaign=Badge_Grade)
-![GitHub last commit](https://img.shields.io/github/last-commit/enrlor/InfluenceDetection)
+[![Build Status](https://travis-ci.com/nickkunz/smogn.svg?branch=master)](https://travis-ci.com/enrlor/sinfpy)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bfe5a201f3b4a9787c6cf4b365736ed)](https://www.codacy.com/manual/enrlor/sinfpy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nickkunz/smogn&amp;utm_campaign=Badge_Grade)
+![GitHub last commit](https://img.shields.io/github/last-commit/enrlor/sinfpy)
 
 ## Description
 InfluenceDetection is a simple algorithm to compute, as the name suggests, how influential nodes in the network are. 
@@ -40,13 +40,12 @@ consider_susceptibility = True computes the influence score of the node accordin
 ## Installation
 python
 ## install pypi release
-pip install netinfluence
+pip install sinfpy
 
 ## Usage
 python
 ## load libraries
-import netinfluence
-import pandas
+import sinfpy
 
 ## Examples - compute influence scores
 
