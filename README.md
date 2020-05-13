@@ -1,4 +1,3 @@
-
 ## Influence Detection
 [![PyPI version](https://badge.fury.io/py/smogn.svg)](https://badge.fury.io/py/smogn)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -33,11 +32,10 @@ consider_susceptibility = True computes the influence score of the node accordin
 
 #TODO: add influence adjusted
 
-
 ## Requirements
-1. Python 3
-2. NumPy
-3. Pandas
+ 1. Python 3
+ 2. NumPy
+ 3. Pandas
 
 ## Installation
 python
@@ -50,11 +48,8 @@ python
 import netinfluence
 import pandas
 
-
 ## Examples - compute influence scores
 
-
-
 ## Reference(s)
-[1] Loria, E., Pirker, J., Drachen, A., & Marconi, A (2020, August). Do Influencers Influence? -- Analyzing Players' Activity in an Online Multiplayer Game. In 2020 IEEE Conference on Games (CoG) (in press). IEEE.
+ 1. Loria, E., Pirker, J., Drachen, A., & Marconi, A (2020, August). Do Influencers Influence? -- Analyzing Players' Activity in an Online Multiplayer Game. In 2020 IEEE Conference on Games (CoG) (in press). IEEE.
 
