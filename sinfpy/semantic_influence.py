@@ -9,9 +9,8 @@ Created on Wed Apr 22 10:19:52 2020
 import multiprocessing as mp
 import pandas as pd
 import numpy as np
-import math
 
-from sinfpy.utils import number_of_peaks
+from sinfpy.utils import number_of_peaks, balance_influence
 
 class EdgeInfluence:
     #Initialization of the algorithm to compute the influence at the edge level.
@@ -27,10 +26,10 @@ class EdgeInfluence:
     #                       The default value is 0.80.
     #balance_inf            can either be True of False, and specifies whether the influence needs
     #                       to be balanced according to the edge's weight. The default value is True
-    #penality               used if balance_inf is True. It specifies the penality applied to the 
+    #penality               used if balance_inf is True. It specifies the penality applied to the
     #                       edge influence score.
     def __init__(self, E, X, computing_influence, dynamic = True,
-                 threshold = 0.80, balance_inf = True, penality = 0.1):
+                threshold = 0.80, balance_inf = True, penality = 0.1):
         self.E = E
         self.X = X
         self.computing_influence = computing_influence
@@ -42,12 +41,6 @@ class EdgeInfluence:
             self.job = self.dynamic_net_job
         else:
             self.jon = self.static_net_job
-        
-    #In case the parameter balance_inf is true, the influence value is adjusted according
-    # to the edge's weight, using a logarithmic function
-    def balance_influence(self, influence, weight, penality = 0.1):
-        penalized_inf = influence * penality
-        return float(influence - (penalized_inf * (1 - math.log(weight + 1, 2)/weight)))
     
     #The job for an individual worker computed on its slice of the data for a static network
     #where the edges do not vary in time.
@@ -76,8 +69,7 @@ class EdgeInfluence:
                                                  influence)
             
                 if(self.balance):
-                    influence = self.balance_influence(influence,
-                                                       len(timeframes))
+                    influence = balance_influence(influence,len(timeframes))
                     
                 E_slice.loc[e,'influence'] = influence
                 
@@ -117,7 +109,7 @@ class EdgeInfluence:
                 if(self.balance):
                     w = E_slice[[(e == i) and (t == tf) for i, t in \
                                  zip(E_slice.index, E_slice.timeframe)]].weight
-                    influence = self.balance_influence(influence, w)
+                    influence = balance_influence(influence, w)
                     
                 E_slice.loc[e,'influence'] = influence
                 

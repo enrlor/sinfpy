@@ -49,11 +49,11 @@ def filereader(filename):
 def participation_influence(xi_old, xi_new, xj_old, xj_new, prev_inf, threshold):
     cols = ['assists','deaths','kills','score']
     influence = 0
-    sim_i = similarity(xi_old.loc[:,cols].iloc[0].values, 
+    sim_i = similarity(xi_old.loc[:,cols].iloc[0].values,
                        xi_new.loc[:,cols].iloc[0].values)
     sim_j = similarity(xj_old.loc[:,cols].iloc[0].values,
                        xj_new.loc[:,cols].iloc[0].values)
-    sim_ij = similarity(xi_new.loc[:,cols].iloc[0].values, 
+    sim_ij = similarity(xi_new.loc[:,cols].iloc[0].values,
                         xj_new.loc[:,cols].iloc[0].values)
     
     if(prev_inf > threshold) or \
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     
     with pd.HDFStore(fout, mode = 'w') as hdf:
         hdf.put('edges', updated_E, format = 'table', data_columns = True)
-        
+
     ni = sinf.NodeInfluence(updated_E, stats = True)
     influences = ni(workers)
     print('NODE INFLUENCE COMPUTED')
