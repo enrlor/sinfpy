@@ -10,7 +10,7 @@ setup(
   url = 'https://github.com/enrlor/sinfpy',   # Provide either the link to your github or to your website
   download_url = 'https://github.com/enrlor/sinfpy/archive/v_01.tar.gz',    # I explain this later on
   keywords = ['sna', 'graph', 'influence', 'game analytics'],   # Keywords that define your package best
-  install_requires=[           
+  install_requires=[
         'numpy',
         'pandas',
         'multiprocessing',

@@ -63,8 +63,8 @@ class EdgeInfluence:
                 xj_new = X.loc[[(X.characterId == j) & list(X.timeframe == tf)][0], :]
     		
             
-                influence = self.computing_influence(xi_old, xi_new, 
-                                                 xj_old, xj_new, 
+                influence = self.computing_influence(xi_old, xi_new,
+                                                 xj_old, xj_new,
                                                  self.threshold,
                                                  influence)
             
@@ -85,7 +85,7 @@ class EdgeInfluence:
             
             influence = 0
             timeframes =  E_slice.loc[pd.IndexSlice[e],'timeframe']
-            if (type(timeframes) == np.float64 or len(timeframes) == 0):
+            if (isinstance(timeframes,np.float64) or len(timeframes) == 0):
                 continue
             else:
                 timeframes = timeframes.values
@@ -102,7 +102,7 @@ class EdgeInfluence:
                 xj_new = X.loc[[(X.characterId == j) & list(X.timeframe == tf)][0], :]
     		
                 influence = self.computing_influence(xi_old, xi_new,
-                                                 xj_old, xj_new, 
+                                                 xj_old, xj_new,
                                                  self.threshold,
                                                  influence)
             
@@ -113,7 +113,7 @@ class EdgeInfluence:
                     
                 E_slice.loc[e,'influence'] = influence
                 
-                prev_tf = tf 
+                prev_tf = tf
                 
         return E_slice
             
@@ -228,7 +228,7 @@ class NodeInfluence:
             nodes_list_slice = nodes_list[start_index:]
             E_slice = self.E.iloc[[ (a in nodes_list_slice or b in nodes_list_slice) \
                                     for a,b in zip(self.E.p1,self.E.p2)],:]
-            workers.append(pool.apply_async(self.job, (nodes_list_slice, E_slice)))        
+            workers.append(pool.apply_async(self.job, (nodes_list_slice, E_slice)))
         
         influence_scores = None
         for worker in workers:
@@ -238,5 +238,5 @@ class NodeInfluence:
             else:
                 influence_scores = influence_scores.append(worker.get())
         pool.close()
-        
+
         return influence_scores

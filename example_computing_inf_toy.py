@@ -78,7 +78,7 @@ if __name__ == '__main__':
     updated_E = ei(workers)
     
     print('EDGE INFLUENCES COMPUTED')
-    
+
     with pd.HDFStore(fout, mode = 'w') as hdf:
         hdf.put('edges', updated_E, format = 'table', data_columns = True)
 
