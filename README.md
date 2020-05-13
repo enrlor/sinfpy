@@ -1,3 +1,12 @@
+
+## Influence Detection
+[![PyPI version](https://badge.fury.io/py/smogn.svg)](https://badge.fury.io/py/smogn)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Build Status](https://travis-ci.com/nickkunz/smogn.svg?branch=master)](https://travis-ci.com/enrlor/InfluenceDetection)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bfe5a201f3b4a9787c6cf4b365736ed)](https://www.codacy.com/manual/enrlor/InfluenceDetection?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nickkunz/smogn&amp;utm_campaign=Badge_Grade)
+![GitHub last commit](https://img.shields.io/github/last-commit/enrlor/InfluenceDetection)
+
+## Description
 InfluenceDetection is a simple algorithm to compute, as the name suggests, how influential nodes in the network are. 
 The influence is computed as a value between -1 and 1. The lower the value the more susceptible the node is to influence, the higher the value the more the node exterts influence on their neighbors.
 This algorithm built upon the concept of influence as an increase of similarity over time. In other words, influence over an edge e(v,w) occurrs if v is more similar to w on time t, and they got connected on t-1. The influence, in this case, is positive for w and negative to v. The magnitude of the influence is determined by the similarity increases.
@@ -22,8 +31,30 @@ The NodeInfluence class has an additional parameter consider_susceptibility, whi
 consider_susceptibility = False computes the influence score of the node according to the paper [1]. #Destiny
 consider_susceptibility = True computes the influence score of the node according to the paper [2], in which the influence score also encloses the susceptibility of the neighbors. In this case, multiple iterations (at least 2) of the algorithm are needed. #Journal - further details TBD
 
-
-
-
-
 #TODO: add influence adjusted
+
+
+## Requirements
+1. Python 3
+2. NumPy
+3. Pandas
+
+## Installation
+python
+## install pypi release
+pip install netinfluence
+
+## Usage
+python
+## load libraries
+import netinfluence
+import pandas
+
+
+## Examples - compute influence scores
+
+
+
+## Reference(s)
+[1] Loria, E., Pirker, J., Drachen, A., & Marconi, A (2020, August). Do Influencers Influence? -- Analyzing Players' Activity in an Online Multiplayer Game. In 2020 IEEE Conference on Games (CoG) (in press). IEEE.
+
