@@ -36,6 +36,9 @@ consider_susceptibility = True computes the influence score of the node accordin
  1. Python 3
  2. NumPy
  3. Pandas
+ 4. multiprocessing
+ 5. math
+ 6. scipy
 
 ## Installation
 python
