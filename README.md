@@ -1,5 +1,5 @@
 ## Detecting Semantic Influential Nodes in Time-Evolving Graphs
-[![PyPI version](https://badge.fury.io/py/smogn.svg)](https://badge.fury.io/py/sinfpy)
+[![PyPI version](https://badge.fury.io/py/sinfpy.svg)](https://badge.fury.io/py/sinfpy)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Build Status](https://travis-ci.com/nickkunz/smogn.svg?branch=master)](https://travis-ci.com/enrlor/sinfpy)
 <!-- [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bfe5a201f3b4a9787c6cf4b365736ed)](https://www.codacy.com/manual/enrlor/sinfpy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nickkunz/smogn&amp;utm_campaign=Badge_Grade)
