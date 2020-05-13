@@ -6,8 +6,8 @@ Created on Wed Apr 22 10:20:10 2020
 @author: fbk_user
 """
 
-import influence_detection as inf
-from utils import similarity
+import sinfpy.semantic_influence as sinf
+from sinfpy.utils import similarity
 
 import multiprocessing as mp
 import pandas as pd
@@ -15,7 +15,6 @@ import sys
 
 def filereader(filename):
     with pd.HDFStore(filename, mode = 'r') as hdf:
-        #print(hdf.keys())
         edges_tfs = [name if 'edgelist_tf' in name else '' for name in hdf.keys()]
         data_tfs = [name if 'X_tf' in name else '' for name in hdf.keys()]
         E = None
@@ -43,30 +42,12 @@ def filereader(filename):
                 else:
                     X = X.append(hdf[i])
     
-    
-    #ONLY USED IF TIMEFRAME != DAYS   
-    if (tf_len_type != 'D'):
-        E = E.reset_index().groupby(['p1','p2','timeframe']).agg({'weight':'sum'}).reset_index().set_index(['p1','p2'])
-        X = X.groupby(['characterId','timeframe']).agg({
-                'assists':'sum',
-                'deaths':'sum',
-                'kills':'sum',
-                'score':'sum',
-                'activityDurationSeconds':'sum',
-                'averageLifespanSeconds':'mean',
-                'completed':'mean',
-                'numMatches':'sum',
-                'avgTimeBetweenMatches':'mean',
-                }).reset_index()   
-    
-    
     E = E.sort_index()
     return E,X
 
 
 def participation_influence(xi_old, xi_new, xj_old, xj_new, prev_inf, threshold):
-    cols = ['numMatches', 'avgTimeBetweenMatches', 
-            'activityDurationSeconds', 'completed']
+    cols = ['assists','deaths','kills','score']
     influence = 0
     sim_i = similarity(xi_old.loc[:,cols].iloc[0].values, 
                        xi_new.loc[:,cols].iloc[0].values)
@@ -85,33 +66,14 @@ def participation_influence(xi_old, xi_new, xj_old, xj_new, prev_inf, threshold)
 
 if __name__ == '__main__':
     
-    if len(sys.argv) >= 2:
-        tf_len_type = sys.argv[2]
-        if(tf_len_type == 'D'):
-            filename = '../Data/Destiny/SN/SNA_Destiny_Daily.h5'
-            fout = '../Data/Destiny/MeasuresPerPlayer/Destiny_SN_Influence_Daily.h5'
-        elif(tf_len_type == 'W'):
-            filename = '../Data/Destiny/SN/SNA_Destiny_Weekly.h5'
-            fout = '../Data/Destiny/MeasuresPerPlayer/Destiny_SN_Influence_Weekly.h5'
-        elif(tf_len_type == 'M'):
-            filename = '../Data/Destiny/SN/SNA_Destiny_Monthly.h5'
-            fout = '../Data/Destiny/MeasuresPerPlayer/Destiny_SN_Influence_Monthly.h5'
-        else:
-            print('The arg must specify if the influence is daily weekly or monthly [D,W,M].')
-            sys.exit()
-    else:
-        print('You need to specify the lenght of the timeframes.')
-        sys.exit()
-    
-    tf_len_type = 'W'
-    
+    fname = 'sample_data/toy_SN.h5'
+    fout = 'sample_data/toy_influence.h5'
     workers = mp.cpu_count()
     
     print('READY')
     
-    
-    E, X = filereader(filename)
-    ei = inf.EdgeInfluenceDetection(E, X, participation_influence) 
+    E, X = filereader(fname)
+    ei = sinf.EdgeInfluence(E, X, participation_influence) 
                             
     updated_E = ei(workers)
     
@@ -120,12 +82,7 @@ if __name__ == '__main__':
     with pd.HDFStore(fout, mode = 'w') as hdf:
         hdf.put('edges', updated_E, format = 'table', data_columns = True)
         
-    '''
-    with pd.HDFStore(fout, mode = 'r') as hdf:
-        updated_E = hdf['/edges']
-    '''
-    
-    ni = inf.NodeInfluence(updated_E, stats = True)
+    ni = sinf.NodeInfluence(updated_E, stats = True)
     influences = ni(workers)
     
     print('NODE INFLUENCE COMPUTED')
@@ -133,4 +90,4 @@ if __name__ == '__main__':
     with pd.HDFStore(fout) as hdf:
         hdf.put('nodes', influences, format = 'table', data_columns = True)
 
-
+    print(influences)
