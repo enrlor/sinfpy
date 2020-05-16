@@ -8,7 +8,7 @@ setup(
   author = 'enrlor',                   # Type in your name
   author_email = 'enricaloria94@gmail.com',      # Type in your E-Mail
   url = 'https://github.com/enrlor/sinfpy',   # Provide either the link to your github or to your website
-  download_url = 'https://github.com/enrlor/sinfpy/archive/v_01.tar.gz',   
+  download_url = 'https://github.com/enrlor/sinfpy/releases/tag/v_00.2',   
   keywords = ['sna', 'graph', 'influence', 'game analytics'],   # Keywords that define your package best
   install_requires=[
         'numpy',
