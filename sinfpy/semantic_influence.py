@@ -10,7 +10,26 @@ import multiprocessing as mp
 import pandas as pd
 import numpy as np
 
-from sinfpy.utils import number_of_peaks, balance_influence
+from sinfpy.utils import number_of_peaks, balance_influence, similarity
+
+#Default function to compute influence, which can be redefined.
+#It assumes all the columns in x being numbers, and relevant to the computation 
+#of the similarity
+def properties_similarity(xi_old, xi_new, xj_old, xj_new, prev_inf, threshold):
+    influence = 0
+    sim_i = similarity(xi_old.iloc[0].values,
+                       xi_new.iloc[0].values)
+    sim_j = similarity(xj_old.iloc[0].values,
+                       xj_new.iloc[0].values)
+    sim_ij = similarity(xi_new.iloc[0].values,
+                        xj_new.iloc[0].values)
+    
+    if(prev_inf > threshold) or \
+        (sim_i <= threshold and sim_j > threshold) or \
+        (sim_i > threshold and sim_j <= threshold):
+            influence = sim_ij if sim_i > sim_j else -sim_ij
+    
+    return influence
 
 class EdgeInfluence:
     #Initialization of the algorithm to compute the influence at the edge level.
@@ -28,7 +47,7 @@ class EdgeInfluence:
     #                       to be balanced according to the edge's weight. The default value is True
     #penality               used if balance_inf is True. It specifies the penality applied to the
     #                       edge influence score.
-    def __init__(self, E, X, computing_influence, dynamic = True,
+    def __init__(self, E, X, computing_influence = properties_similarity, dynamic = True,
                 threshold = 0.80, balance_inf = True, penality = 0.1):
         self.E = E
         self.X = X
