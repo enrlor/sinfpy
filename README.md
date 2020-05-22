@@ -5,6 +5,9 @@
 <!-- [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bfe5a201f3b4a9787c6cf4b365736ed)](https://www.codacy.com/manual/enrlor/sinfpy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nickkunz/smogn&amp;utm_campaign=Badge_Grade)
 ![GitHub last commit](https://img.shields.io/github/last-commit/enrlor/sinfpy)-->
 
+## Disclaimer!
+Please note that the repository is a work in progress, as the python library.
+
 ## Description
 Semantic Influence Detection is a simple algorithm to compute how influential the nodes in the network are. The influence is computed as a value between -1 and 1. The lower the value the more susceptible the node is to influence, the higher the value the more the node exterts influence on their neighbors.
 The algorithm is built upon the concept of influence as an increase of similarity over time. In other words, influence over an edge e(v,w) occurrs if v is more similar to w on time t, and they got connected on t-1. The influence, in this case, is positive for w and negative to v. The magnitude of the influence is determined by the similarity increases.
@@ -32,7 +35,6 @@ For further details, please refer to the paper mentioned in the Reference(s) sec
 3. Pandas
 4. multiprocessing
 5. scipy
-6. math
 
 ## Installation pypi release
 pip install sinfpy
