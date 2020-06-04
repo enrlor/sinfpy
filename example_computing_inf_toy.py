@@ -4,7 +4,6 @@
 import sinfpy.semantic_influence as sinf
 from sinfpy.utils import similarity
 
-import multiprocessing as mp
 import pandas as pd
 import sys
 
