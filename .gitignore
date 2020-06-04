@@ -5,3 +5,5 @@ dist/
 .Rproj.user
 .Rhistory
 .Rproj
+MANIFEST
+README
