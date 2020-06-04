@@ -34,9 +34,17 @@ class EdgeInfluence:
     #E                      is the table of edges in the form of <p1, p2, timeframe, weight>.
     #                       the table is indexed by (p1,p2)
     #X                      is the attributes table in the form of <characterId, attributes_list..., timeframe>
+    #user_id                name of the column representing the ids of the users in the data DataFrame
+    #edge_u                 name of the column representing the 1st node in the edge list Dataframe
+    #edge_v                 name of the column representing the 2st node in the edge list Dataframe
+    #timeframe              name of the column representing the timeframes in the data (and edge list if dynamic) DataFrame
     #computing_influence    is the function used to compute the edge influence from similarity.
-    #                       the function signature must be the following (xi_old, xi_new, xj_old, xj_new, prev_inf, threshold)
-    #                       the similarity can either be user-defined or the similarity function in sinfy.utils
+    #                       if a custom function is defined, the signature must be the following 
+    #                       (xi_old, xi_new, xj_old, xj_new, threshold, prev_inf, similarity_fun)
+    #                       the similarity_fun is the function used to compute the similarity, according to the method chosen
+    #similarity             the function used to compute the similarity among the nodes' properties,
+    #                       which can either be the cosine simiarity, the euclidean distance,
+    #                       or the manhattan distance.
     #dynamic                can either be True or False, and specifies whether the graph is dynamic.
     #                       The default value is True.
     #threshold              specifies the minimum similarity to be considered as influence.
