@@ -63,14 +63,13 @@ if __name__ == '__main__':
     
     fname = 'sample_data/toy_SN.h5'
     fout = 'sample_data/toy_influence.h5'
-    workers = mp.cpu_count()
     
     print('READY')
     
     E, X = filereader(fname)
     ei = sinf.EdgeInfluence(E, X, participation_influence)
                             
-    updated_E = ei(workers)
+    updated_E = ei()
     
     print('EDGE INFLUENCES COMPUTED')
 
@@ -78,7 +77,7 @@ if __name__ == '__main__':
         hdf.put('edges', updated_E, format = 'table', data_columns = True)
 
     ni = sinf.NodeInfluence(updated_E, stats = True)
-    influences = ni(workers)
+    influences = ni()
     print('NODE INFLUENCE COMPUTED')
 
     with pd.HDFStore(fout) as hdf:
