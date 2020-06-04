@@ -4,23 +4,29 @@
 [![Build Status](https://travis-ci.com/nickkunz/smogn.svg?branch=master)](https://travis-ci.com/enrlor/sinfpy)
 
 ## Description
-Semantic Influence Detection is a simple algorithm to compute how influential the nodes in the network are. The influence is computed as a value between -1 and 1. The lower the value the more susceptible the node is to influence, the higher the value the more the node exterts influence on their neighbors.
+Semantic Influence Detection (sinfpy) is a simple algorithm to compute how influential the nodes in the network are. The influence scores are computed as values in [-1;1]. The lower the value the more *susceptible* the node is to influence, the higher the value the more the node *exterts influence* on their neighbors.
 The algorithm is built upon the concept of influence as an increase of similarity over time. In other words, influence over an edge e(v,w) occurrs if v is more similar to w on time t, and they got connected on t-1. The influence, in this case, is positive for w and negative to v. The magnitude of the influence is determined by the similarity increases.
-Moreover, we model influence reinforcement by monitoring the influence also in time > t. 
+To compute the influence, timed information of players' properties are needed. The properties are user-defined, and thus, the concept of influence is tied to the properties of interest. The network can either be dynamic or static, in terms of the connection among the nodes. In case of dynamic connections the persistence of the disappeareance of a node is taken into consideration.
 
-The algorithm is composed of two modules (implemented in two classes) the EdgeInfluence and NodeInfluence classes; both support multiprocessing and work with pandas dataframe.
+The algorithm is composed of two modules (implemented in two classes) the **EdgeInfluence** and **NodeInfluence** classes.
 
-EdgeInfluence computes the influence exerted on each edge. 
-It takes as arguments the edge list (E) and the nodes' properties X; each entry is timed. It also takes as parameter the customized algorithm to compute the influence over an edge, the threshold (set to .80) and the parameter to control influence reinforcement.
-The function to compute influence over an edge can either be user-defined or the default function included. The customized function must comply with the followign signature: 
-(![formula](https://render.githubusercontent.com/render/math?math=x_{i}^{t-1},x_{i}^{t},x_{j}^{t},x_{j}^{t-1}),![formula](https://render.githubusercontent.com/render/math?math=threshold),![formula](https://render.githubusercontent.com/render/math?math=influence^{t-1}),similarity_fun)
+### Edges Influence
+The class EdgeInfluence computes the influence exerted on each edge of the network as a result of the nodes' behaviors and interactions over the observatiob period. 
+The class foresees a number of optional parameters which allow the computation to meet the context-specific requirements. 
+While the class encloses a default function to compute the edge influence, it can be customized to better adapt to the use case. The default function assumes that (1) the values are already normalized, (2) all the properties in the data DataFrame X are relevant for the computation of the influence score, and (3) the similarity function is either the default function or the one specified in the class initialization.
+The user-defined function must be passed as argument in the class initialization, and must comply with the followign signature: 
+- ![formula](https://render.githubusercontent.com/render/math?math=x_{i}^{t-1}); properties values for node i prior the connection
+- ![formula](https://render.githubusercontent.com/render/math?math=x_{i}^{t}); properties values for node i at the time of the connection
+- ![formula](https://render.githubusercontent.com/render/math?math=x_{j}^{t-1}); properties values for node j prior the connection
+- ![formula](https://render.githubusercontent.com/render/math?math=x_{j}^{t}); properties values for node j at the time of the connection
+- threshold; as defined in the instantiation phase
+- ![formula](https://render.githubusercontent.com/render/math?math=influence^{t-1}); the influence score, if any influence was exerted in the past
+- similarity_fun; as defined in the instantiation phase, used to compute the magnitude of the influence
 
-The first 4 arguments ![formula](https://render.githubusercontent.com/render/math?math=(x_{i}^{t-1},x_{i}^{t},x_{j}^{t},x_{j}^{t-1})) are the properties of the two nodes i and j to compute the similarity on. Those values need to be pandas dataframe. The default algorithms assumes a size of 1. We will provide examples of why and how the function can be defined to handle bigger dataframes.
-In particular, the default algorithm assumes that each row in X is a node with it's list of properties. However, by customizing the similarity function X can also be a list of <userid, property name, property value, timeframe ...> to allow having different properties for each node. In this case, the influence should be computed only on shared properties.
-By default, the algorithm controls influence reinforcement over time, so we inclueded a penalizing factor. More specifically, the assumption is that, when influence occurrs, it should increase as the connection among the nodes persist. This parameter can be disabled.
+The edge influence computed refers to the magnitude of the influence exerted. Therefore, it has a positive value for one end of the edge (influencer) and a negative value for the other (influenced). 
 
-NodeInfluence computes the influence for every node from the edge influence. Since every time influence occurs one end is the influencer and the other end is the susceptible node. Therefore, the influence score on the edge is positive from one oned and negative for the other. 
-By convention, for each edge e=(u,v), with id(u) < id(v), and influence exerted edge_inf(e), edge_inf(e,u) = edge_inf(e) and edge_inf(e,v) = -edge_inf(e).
+### Nodes Influence
+The class NodeInfluence computes the final value of the influence score for every node, as an aggregated of the influence of the edges they were involved in. 
 
 ## Disclaimer!
 Note that this project is the outcome of a research study and, as such, in continuous update. Thus, many features are yet to be implemented. If you find any bugs or would like any additional features please contact me.
