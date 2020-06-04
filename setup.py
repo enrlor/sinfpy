@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'sinfpy',         # How you named your package folder (MyLib)
   packages = ['sinfpy'],   # Chose the same as "name"
-  version = '0.1',      # Start with a small number and increase it with every change you make
+  version = '0.1.1',      # Start with a small number and increase it with every change you make
   license='GNU GPLv3',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'Algorithm to compute semantic influence scores in dynamic graphs.',   # Give a short description about your library
   author = 'enrlor',                   # Type in your name

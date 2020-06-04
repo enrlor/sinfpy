@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 22 10:20:10 2020
-
-@author: fbk_user
-"""
 
 import sinfpy.semantic_influence as sinf
 from sinfpy.utils import similarity

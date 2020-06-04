@@ -1,28 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 22 10:19:52 2020
-
-@author: enrlor
-"""
 
 import multiprocessing as mp
 import pandas as pd
 import numpy as np
 
+import psutil
+import ray
+
 from sinfpy.utils import number_of_peaks, balance_influence, similarity
 
-#Default function to compute influence, which can be redefined.
+#Default function to compute influence on a specific edge, which can be redefined.
 #It assumes all the columns in x being numbers, and relevant to the computation 
 #of the similarity
-def properties_similarity(xi_old, xi_new, xj_old, xj_new, prev_inf, threshold):
+def properties_similarity(xi_old, xi_new, xj_old, xj_new, threshold, prev_inf, similarity_fun):
     influence = 0
-    sim_i = similarity(xi_old.iloc[0].values,
-                       xi_new.iloc[0].values)
-    sim_j = similarity(xj_old.iloc[0].values,
-                       xj_new.iloc[0].values)
-    sim_ij = similarity(xi_new.iloc[0].values,
-                        xj_new.iloc[0].values)
+    sim_i = similarity_fun(xi_old.iloc[0].tolist(),
+                       xi_new.iloc[0].tolist())
+    sim_j = similarity_fun(xj_old.iloc[0].tolist(),
+                       xj_new.iloc[0].tolist())
+    sim_ij = similarity_fun(xi_new.iloc[0].tolist(),
+                        xj_new.iloc[0].tolist())
     
     if(prev_inf > threshold) or \
         (sim_i <= threshold and sim_j > threshold) or \
@@ -47,94 +45,148 @@ class EdgeInfluence:
     #                       to be balanced according to the edge's weight. The default value is True
     #penality               used if balance_inf is True. It specifies the penality applied to the
     #                       edge influence score.
-    def __init__(self, E, X, computing_influence = properties_similarity, dynamic = True,
+    def __init__(self, E, X, user_id = 'characterId', edge_u = 'p1', edge_v = 'p2', timeframe = 'timeframe',
+                computing_influence = properties_similarity, similarity = 'cosine', dynamic = True,
                 threshold = 0.80, balance_inf = True, penality = 0.1):
         self.E = E
         self.X = X
+        self.userid = user_id
+        self.edgeu = edge_u
+        self.edgev = edge_v
+        self.timeframe = timeframe
+
+        self.similarity = similarity
         self.computing_influence = computing_influence
         self.threshold = threshold
         self.balance = balance_inf
         self.penality = penality
-        
+
         if dynamic:
             self.job = self.dynamic_net_job
         else:
-            self.jon = self.static_net_job
+            self.job = self.static_net_job
+
+        self.checkdata()
+
     
+    def checkdata(self):
+        if not isinstance(self.threshold, np.float64) :
+            raise TypeError('threshold should be a float.')
+        if not isinstance(self.balance, bool):
+            raise TypeError('balance_inf should be a boolean.')
+        if not isinstance(self.penality, np.float64):
+            raise TypeError('penality should be a float.')
+
+        if not isinstance(self.X, pd.DataFrame):
+            raise TypeError('X should be a pandas DataFrame.')
+        else:
+            if not self.userid in self.X.columns:
+                raise ValueError('No ' + self.userid + ' in X columns.')
+            if not self.timeframe in self.X.columns:
+                raise ValueError('No ' + self.timeframe + ' in X columns.')
+        
+        if not isinstance(self.E, pd.DataFrame):
+            raise TypeError('E should be a pandas DataFrame.')
+        else: 
+            if not self.edgeu in self.E.columns:
+                raise ValueError('No ' + self.edgeu + ' in E columns.')
+            if not self.edgev in self.E.columns:
+                raise ValueError('No ' + self.edgev + ' in E columns.')
+            if self.job == self.dynamic_net_job:
+                if not self.timeframe in self.E.columns:
+                    raise ValueError('No ' + self.timeframe + ' in E columns.')
+        
+
+
     #The job for an individual worker computed on its slice of the data for a static network
     #where the edges do not vary in time.
-    def static_net_job(self, E_slice, X):
-        E_slice.loc[:,'influence'] = 0
-        for e in E_slice.index.unique():
+    @ray.remote
+    def static_net_job(self, E, X, edge_list, edges_slice_index):
+        E_slice = pd.DataFrame({self.edgeu : [x[0] for x in edge_list[range(edges_slice_index[0],edges_slice_index[1]+1)]],
+                                self.edgev : [x[1] for x in edge_list[range(edges_slice_index[0],edges_slice_index[1]+1)]],
+                                'influence': [0]*(edges_slice_index[1]+1-edges_slice_index[0])})
+        E_slice.set_index([self.edgeu,self.edgev], inplace = True)
+        
+        for e,_ in E_slice.iterrows():
             
             influence = 0
-            timeframes =  X.timeframe.unique().values
+
+            i = str(min(int(e[0]), int(e[1])))
+            j = str(max(int(e[0]), int(e[1])))
+
+            Xi = X.loc[[i]].reset_index()
+            Xj = X.loc[[j]].reset_index()
+
+            timeframes =  list(set(X.loc[:,self.timeframe].unique().tolist() + Xj.loc[:,self.timeframe].unique().tolist()))
             timeframes.sort()
-            i = min(e[0], e[1])
-            j = max(e[0], e[1])
-            
             prev_tf = timeframes[0]
             
             for tf in timeframes[1:]:
-                xi_old = X.loc[[(X.characterId == i) & list(X.timeframe == prev_tf)][0], :]
-                xj_old = X.loc[[(X.characterId == j) & list(X.timeframe == prev_tf)][0], :]
-                xi_new = X.loc[[(X.characterId == i) & list(X.timeframe == tf)][0], :]
-                xj_new = X.loc[[(X.characterId == j) & list(X.timeframe == tf)][0], :]
+                xi_old = Xi[Xi.loc[:,self.timeframe] == prev_tf]
+                xj_old = Xj[Xj.loc[:,self.timeframe] == prev_tf]
+                xi_new = Xi[Xi.loc[:,self.timeframe] == tf]
+                xj_new = Xj[Xj.loc[:,self.timeframe] == tf]
     		
-            
                 influence = self.computing_influence(xi_old, xi_new,
                                                  xj_old, xj_new,
                                                  self.threshold,
-                                                 influence)
+                                                 influence,
+                                                 self.similarity)
             
                 if(self.balance):
                     influence = balance_influence(influence,len(timeframes))
                     
                 E_slice.loc[e,'influence'] = influence
                 
-                prev_tf = tf  
-                
-        return E_slice
+                prev_tf = tf 
+
+        return E_slice.reset_index()
     
     #The job for an individual worker computed on its slice of the data for a dynamic network
     #where the edges may vary in time.
-    def dynamic_net_job(self, E_slice, X):
-        E_slice.loc[:,'influence'] = 0
-        for e in E_slice.index.unique():
+    @ray.remote
+    def dynamic_net_job(self, E, X, edge_list, edges_slice_index):
+        E_slice = pd.DataFrame({self.edgeu : [x[0] for x in edge_list[range(edges_slice_index[0],edges_slice_index[1]+1)]],
+                                self.edgev : [x[1] for x in edge_list[range(edges_slice_index[0],edges_slice_index[1]+1)]],
+                                'influence': [0]*(edges_slice_index[1]+1-edges_slice_index[0])})
+        E_slice.set_index([self.edgeu,self.edgev], inplace = True)
+        
+        for e,_ in E_slice.iterrows():
             
             influence = 0
-            timeframes =  E_slice.loc[pd.IndexSlice[e],'timeframe']
+            timeframes =  E_slice.loc[pd.IndexSlice[e],self.timeframe]
             if (isinstance(timeframes,np.float64) or len(timeframes) == 0):
                 continue
             else:
-                timeframes = timeframes.values
+                timeframes = timeframes.tolist()
             timeframes.sort()
-            i = min(e[0], e[1])
-            j = max(e[0], e[1])
-            
+            i = str(min(int(e[0]), int(e[1])))
+            j = str(max(int(e[0]), int(e[1])))
+
             prev_tf = timeframes[0]
             
             for tf in timeframes[1:]:
-                xi_old = X.loc[[(X.characterId == i) & list(X.timeframe == prev_tf)][0], :]
-                xj_old = X.loc[[(X.characterId == j) & list(X.timeframe == prev_tf)][0], :]
-                xi_new = X.loc[[(X.characterId == i) & list(X.timeframe == tf)][0], :]
-                xj_new = X.loc[[(X.characterId == j) & list(X.timeframe == tf)][0], :]
+                xi_old = X.loc[[(X.loc[:,self.userid] == i) & list(X.loc[:,self.timeframe] == prev_tf)][0], :]
+                xj_old = X.loc[[(X.loc[:,self.userid] == j) & list(X.loc[:,self.timeframe] == prev_tf)][0], :]
+                xi_new = X.loc[[(X.loc[:,self.userid] == i) & list(X.loc[:,self.timeframe] == tf)][0], :]
+                xj_new = X.loc[[(X.loc[:,self.userid] == j) & list(X.loc[:,self.timeframe] == tf)][0], :]
     		
                 influence = self.computing_influence(xi_old, xi_new,
                                                  xj_old, xj_new,
                                                  self.threshold,
-                                                 influence)
+                                                 influence,
+                                                 self.similarity)
             
                 if(self.balance):
                     w = E_slice[[(e == i) and (t == tf) for i, t in \
-                                 zip(E_slice.index, E_slice.timeframe)]].weight
+                                 zip(E_slice.index, E_slice.loc[:,self.timeframe])]].weight
                     influence = balance_influence(influence, w)
                     
                 E_slice.loc[e,'influence'] = influence
                 
                 prev_tf = tf
                 
-        return E_slice
+        return E_slice.reset_index()
             
     #When the object is called the edge influence is computed.
     #The algorithm supports multiprocessing, so the number of available workers can be specified.
@@ -143,35 +195,42 @@ class EdgeInfluence:
     #Important: the influence value refers to the node with the lowest id; for the other node the
     #edge influence score is -influence.
     def __call__(self, n_workers = None):
+        
+        n_workers = psutil.cpu_count(logical=False) if n_workers == None else n_workers
+        available = psutil.virtual_memory()[1]
+        
         edge_list = self.E.index.unique()
         size = len(edge_list)
         load = int(size/n_workers)
         
-        pool = mp.Pool(n_workers)
-        workers = []
-
+        ray.init(num_cpus=n_workers, 
+                 memory=available*0.6, object_store_memory=available*0.4)
+        
+        self.X = self.X.set_index(self.userid)
+        self.X.loc[:,self.timeframe] = self.X.loc[:,self.timeframe].astype(int)
+        
+        E_id = ray.put(self.E)
+        X_id = ray.put(self.X)
+        edge_list_id = ray.put(edge_list)
+        
+        eindexes = []
+        
         if n_workers is None or n_workers < 2:
-            workers.append(pool.apply_async(self.job, (self.E, self.X)))
+            eindexes.append([0, len(edge_list_id)])
         else:
-            edge_list_slices = [edge_list[start_index:start_index+load] \
-                for start_index in range(0, (n_workers - 1)*load, load)]
-            workers = [pool.apply_async(self.job, (self.E.loc[eslice,:], self.X)) \
-                for eslice in edge_list_slices]
+            eindexes = [ [start_index,start_index+load] \
+                for start_index in range(0, (n_workers - 1)*load, load) ]
 
             #last worker size may be bigger
             start_index = (n_workers - 1)*load
-            edge_list_slice = edge_list[start_index:]
-            E_slice = self.E.loc[edge_list_slice,:]
-            workers.append(pool.apply_async(self.job, (E_slice, self.X)))
+            eindexes.append([start_index, len(edge_list) - 1])
 
-        updated_E = None
-        for worker in workers:
-            worker.wait()
-            if updated_E is None:
-                updated_E = worker.get()
-            else:
-                updated_E = updated_E.append(worker.get())
-        pool.close()
+        updated_E = ray.get([self.job.remote(self,E_id,X_id,edge_list_id, i) \
+                       for i in eindexes])
+
+        ray.shutdown()
+        
+        updated_E = pd.concat([updated_E], ignore_index = True)
         
         return updated_E
 
@@ -181,13 +240,29 @@ class NodeInfluence:
     #E          is the table of updated edges, with the edge influence
     #stats      if True computes also the number of peaks and the standart
     #           deviation of the edge influence for each node.
-    def __init__(self, E, stats = False):
+    def __init__(self, E, edge_u = 'p1', edge_v = 'p2', stats = False):
         self.E = E.reset_index()
         self.stats = stats
+        self.edgeu = edge_u
+        self.edgev = edge_v
+
+        self.checkdata
+
+    def checkdata(self):
+        if not isinstance(self.E, pd.DataFrame):
+            raise TypeError('E should be a pandas DataFrame.')
+        else: 
+            if not self.edgeu in self.E.columns:
+                raise ValueError('No ' + self.edgeu + ' in E columns.')
+            if not self.edgev in self.E.columns:
+                raise ValueError('No ' + self.edgev + ' in E columns.')
+        
     
     #The job for an individual worker computed on its slice of the data
-    def job(self, nodes_list, edges):
-        influence_scores = pd.DataFrame(nodes_list, columns = ['node'])
+    @ray.remote
+    def job(self, nodes_list, edges, nodes_slice_index):
+        influence_scores = pd.DataFrame(nodes_list.iloc[range(nodes_slice_index[0],nodes_slice_index[1]+1),:], 
+                                        columns = ['node'])
         influence_scores.loc[:,'influence'] = 0
         if self.stats:
             influence_scores.loc[:,'n_peaks'] = 0
@@ -196,12 +271,12 @@ class NodeInfluence:
         for i in range(len(influence_scores.node)):
             influence_sum = 0
             node = influence_scores.node[i]
-            edges_slice = edges.loc[list((edges.p1 == node) | (edges.p2 == node)),:]
+            edges_slice = edges.loc[list((edges.loc[:,self.edgeu] == node) | (edges.loc[:,self.edgev] == node)),:]
             inf_list = []
             for j in range(len(edges_slice)):
                 e = edges_slice.iloc[j,:]
                 influence = e['influence']
-                influence = influence if e.p1 == node else -influence
+                influence = influence if e.loc[:,self.edgeu] == node else -influence
                 influence_sum += influence
                 inf_list.append(influence)
             influence_scores.loc[i, 'influence'] = influence_sum/len(edges_slice)
@@ -217,45 +292,48 @@ class NodeInfluence:
     #The default is None.
     #It returns a table with the list of nodes and the influence score, as the stats if the param is True.
     def __call__(self, n_workers = None):
-        nodes_list = list(set(self.E.p1.tolist() +
-                        self.E.p2.tolist()))
+        n_workers = psutil.cpu_count(logical=False) if n_workers == None else n_workers
+        available = psutil.virtual_memory()[1]
+        
+        nodes_list = list(set(self.E.loc[:,self.edgeu].tolist() +
+                        self.E.loc[:,self.edgev].tolist()))
         size = len(nodes_list)
         load = int(size/n_workers)
     
-        pool = mp.Pool(n_workers)
+        ray.init(num_cpus=n_workers, 
+                 memory=available*0.6, object_store_memory=available*0.4)
+        
+        E_id = ray.put(self.E)
+        nodes_list_id = ray.put(nodes_list)
 
-        pool = mp.Pool(n_workers)
-        workers = []
-
+        nindexes = []
+        
         if n_workers is None or n_workers < 2:
-            workers.append(pool.apply_async(self.job, (nodes_list, self.E)))
+            nindexes.append([0, len(nodes_list_id)])
         else:
-            #dividing the node list in n_workers - 1 slices
-            nodes_list_slices = [nodes_list[start_index:start_index+load] \
-                for start_index in range(0, (n_workers - 1)*load, load)]
-            #dividing the edge list in n_workers - 1 slices according to the
-            #prior division of the nodes list
-            edge_list_slices = [self.E.iloc[[ (a in nslice or b in nslice) \
-                        for a,b in zip(self.E.p1,self.E.p2)],:] \
-                            for nslice in nodes_list_slices]
-            #building the list of the async workers
-            workers = [pool.apply_async(self.job, (nslice, eslice)) \
-                for eslice,nslice in zip(edge_list_slices,nodes_list_slices)]
-      
+            nindexes = [ [start_index,start_index+load] \
+                for start_index in range(0, (n_workers - 1)*load, load) ]
+            
             #last worker size may be bigger
             start_index = (n_workers - 1)*load
-            nodes_list_slice = nodes_list[start_index:]
-            E_slice = self.E.iloc[[ (a in nodes_list_slice or b in nodes_list_slice) \
-                                    for a,b in zip(self.E.p1,self.E.p2)],:]
-            workers.append(pool.apply_async(self.job, (nodes_list_slice, E_slice)))
+            nindexes.append([start_index, len(nodes_list) - 1])
         
-        influence_scores = None
-        for worker in workers:
-            worker.wait()
-            if influence_scores is None:
-                influence_scores = worker.get()
-            else:
-                influence_scores = influence_scores.append(worker.get())
-        pool.close()
+        influence_scores = ray.get([self.job.remote(nodes_list_id,E_id,i) \
+                       for i in nindexes])
 
+        ray.shutdown()
+        
+        influence_scores = pd.concat([influence_scores], ignore_index = True)
+        
         return influence_scores
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
