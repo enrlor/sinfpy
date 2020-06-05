@@ -7,7 +7,7 @@ import numpy as np
 import psutil
 import ray
 
-from sinfpy.utils import number_of_peaks, balance_influence, similarity
+from sinfpy.utils import number_of_peaks, balance_influence, similarity_fun
 
 #Default function to compute influence on a specific edge, which can be redefined.
 #It assumes all the columns in x being numbers, and relevant to the computation 
@@ -62,7 +62,7 @@ class EdgeInfluence:
         self.edgev = edge_v
         self.timeframe = timeframe
 
-        self.similarity = similarity
+        self.similarity_method = similarity
         self.computing_influence = computing_influence
         self.threshold = threshold
         self.balance = balance_inf
@@ -140,7 +140,7 @@ class EdgeInfluence:
                                                  xj_old, xj_new,
                                                  self.threshold,
                                                  influence,
-                                                 self.similarity)
+                                                 similarity_fun(self.similarity_method))
             
                 if(self.balance):
                     influence = balance_influence(influence,len(timeframes))
@@ -184,7 +184,7 @@ class EdgeInfluence:
                                                  xj_old, xj_new,
                                                  self.threshold,
                                                  influence,
-                                                 self.similarity)
+                                                 similarity_fun(self.similarity_method))
             
                 if(self.balance):
                     w = E_slice[[(e == i) and (t == tf) for i, t in \

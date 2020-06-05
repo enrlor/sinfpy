@@ -6,22 +6,16 @@ import math
 from scipy.signal import find_peaks
 from scipy.spatial import distance
 
-#Computing the cosine similarity between two property vectors.
-#The elements' order is the same in both arguments.
-#It also assumes that the values are normalized.
-#The method can either be cosine (for cosine similarity), 
+#Returns the similarity function as specified in the method
+#parameter, which can either be cosine (for cosine similarity), 
 #euclidean (for euclidean distance), or manhattan (for manhattan distance).
-def similarity(a,b, method = 'cosine'):
+def similarity_fun(method = 'cosine'):
     if method == 'euclidean':
-        return distance.euclidean(a,b)
+        return lambda a,b : distance.euclidean(a,b)
     if method == 'manhattan':
-        return distance.euclidean(a,b)
+        return lambda a,b : distance.euclidean(a,b)
     if method == 'cosine':
-        dot = np.dot(a, b)
-        norma = np.linalg.norm(a)
-        normb = np.linalg.norm(b)
-        cos = dot / (norma * normb)
-        return cos
+        return lambda a,b : np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
     else:
         raise ValueError("Illegal value for method, no definition for " + method)
 
