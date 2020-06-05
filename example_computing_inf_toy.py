@@ -37,7 +37,7 @@ def filereader(filename):
                     X = X.append(hdf[i])
     
     E = E.sort_index()
-    return E,X
+    return E.reset_index(inplace = True),X
 
 
 def participation_influence(xi_old, xi_new, xj_old, xj_new, prev_inf, threshold):

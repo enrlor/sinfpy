@@ -75,6 +75,8 @@ class EdgeInfluence:
 
         self.checkdata()
 
+        self.E.set_index([edge_u,edge_v], inplce = True)
+
     
     def checkdata(self):
         if not isinstance(self.threshold, float) :
