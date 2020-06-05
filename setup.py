@@ -2,13 +2,13 @@ from distutils.core import setup
 setup(
   name = 'sinfpy',         # How you named your package folder (MyLib)
   packages = ['sinfpy'],   # Chose the same as "name"
-  version = '0.2.2',      # Start with a small number and increase it with every change you make
+  version = '0.2.4',      # Start with a small number and increase it with every change you make
   license='GNU GPLv3',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'Algorithm to compute semantic influence scores in dynamic graphs.',   # Give a short description about your library
   author = 'enrlor',                   # Type in your name
   author_email = 'enricaloria94@gmail.com',      # Type in your E-Mail
   url = 'https://github.com/enrlor/sinfpy',   # Provide either the link to your github or to your website
-  download_url = 'https://github.com/enrlor/sinfpy/releases/tag/v_0.2.2',   
+  download_url = 'https://github.com/enrlor/sinfpy/releases/tag/v_0.2.4',   
   keywords = ['sna', 'graph', 'influence', 'game analytics'],   # Keywords that define your package best
   install_requires=[
         'numpy',

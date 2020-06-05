@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import sinfpy.semantic_influence as sinf
-from sinfpy.utils import similarity
 
 import pandas as pd
 import sys
@@ -37,10 +36,10 @@ def filereader(filename):
                     X = X.append(hdf[i])
     
     E = E.sort_index()
-    return E.reset_index(inplace = True),X
+    return E.reset_index(),X
 
 
-def participation_influence(xi_old, xi_new, xj_old, xj_new, prev_inf, threshold):
+def participation_influence(xi_old, xi_new, xj_old, xj_new, prev_inf, threshold, similarity):
     cols = ['assists','deaths','kills','score']
     influence = 0
     sim_i = similarity(xi_old.loc[:,cols].iloc[0].values,
@@ -66,16 +65,18 @@ if __name__ == '__main__':
     print('READY')
     
     E, X = filereader(fname)
-    ei = sinf.EdgeInfluence(E, X, participation_influence)
+    ei = sinf.EdgeInfluence(E = E, X = X, computing_influence = participation_influence)
                             
     updated_E = ei()
     
     print('EDGE INFLUENCES COMPUTED')
 
+    print(updated_E)
+    
     with pd.HDFStore(fout, mode = 'w') as hdf:
         hdf.put('edges', updated_E, format = 'table', data_columns = True)
 
-    ni = sinf.NodeInfluence(updated_E, stats = True)
+    ni = sinf.NodeInfluence(updated_E, stats = False)
     influences = ni()
     print('NODE INFLUENCE COMPUTED')
 

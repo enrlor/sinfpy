@@ -75,8 +75,12 @@ class EdgeInfluence:
 
         self.checkdata()
 
-        self.E.set_index([edge_u,edge_v], inplace = True)
+        self.X.loc[:,user_id] = self.X.loc[:,user_id].astype(str)
 
+        self.E.loc[:,edge_u] = self.E.loc[:,edge_u].astype(str)
+        self.E.loc[:,edge_v] = self.E.loc[:,edge_v].astype(str)
+        self.E.set_index([edge_u,edge_v], inplace = True)
+        self.E.sort_index(inplace = True)
     
     def checkdata(self):
         if not isinstance(self.threshold, float) :
@@ -163,7 +167,8 @@ class EdgeInfluence:
         for e,_ in E_slice.iterrows():
             
             influence = 0
-            timeframes =  E_slice.loc[pd.IndexSlice[e],self.timeframe]
+            timeframes =  E.loc[pd.IndexSlice[e],self.timeframe].values
+            
             if (isinstance(timeframes,np.float64) or len(timeframes) == 0):
                 continue
             else:
@@ -173,12 +178,14 @@ class EdgeInfluence:
             j = str(max(int(e[0]), int(e[1])))
 
             prev_tf = timeframes[0]
+            Xi = X.loc[[i]].reset_index()
+            Xj = X.loc[[j]].reset_index()
             
             for tf in timeframes[1:]:
-                xi_old = X.loc[[(X.loc[:,self.userid] == i) & list(X.loc[:,self.timeframe] == prev_tf)][0], :]
-                xj_old = X.loc[[(X.loc[:,self.userid] == j) & list(X.loc[:,self.timeframe] == prev_tf)][0], :]
-                xi_new = X.loc[[(X.loc[:,self.userid] == i) & list(X.loc[:,self.timeframe] == tf)][0], :]
-                xj_new = X.loc[[(X.loc[:,self.userid] == j) & list(X.loc[:,self.timeframe] == tf)][0], :]
+                xi_old = Xi[Xi.loc[:,self.timeframe] == prev_tf]
+                xj_old = Xj[Xj.loc[:,self.timeframe] == prev_tf]
+                xi_new = Xi[Xi.loc[:,self.timeframe] == tf]
+                xj_new = Xj[Xj.loc[:,self.timeframe] == tf]
     		
                 influence = self.computing_influence(xi_old, xi_new,
                                                  xj_old, xj_new,
@@ -187,8 +194,8 @@ class EdgeInfluence:
                                                  similarity_fun(self.similarity_method))
             
                 if(self.balance):
-                    w = E_slice[[(e == i) and (t == tf) for i, t in \
-                                 zip(E_slice.index, E_slice.loc[:,self.timeframe])]].weight
+                    w = E[[(e == i) and (t == tf) for i, t in \
+                                 zip(E.index, E.loc[:,self.timeframe])]].weight
                     influence = balance_influence(influence, w)
                     
                 E_slice.loc[e,'influence'] = influence
@@ -239,7 +246,7 @@ class EdgeInfluence:
 
         ray.shutdown()
         
-        updated_E = pd.concat([updated_E], ignore_index = True)
+        updated_E = pd.concat([df for df in updated_E], ignore_index = True)
         
         return updated_E
 
@@ -270,8 +277,7 @@ class NodeInfluence:
     #The job for an individual worker computed on its slice of the data
     @ray.remote
     def job(self, nodes_list, edges, nodes_slice_index):
-        influence_scores = pd.DataFrame(nodes_list.iloc[range(nodes_slice_index[0],nodes_slice_index[1]+1),:], 
-                                        columns = ['node'])
+        influence_scores = pd.DataFrame({'node': nodes_list[range(nodes_slice_index[0],nodes_slice_index[1]+1)] })
         influence_scores.loc[:,'influence'] = 0
         if self.stats:
             influence_scores.loc[:,'n_peaks'] = 0
@@ -283,16 +289,17 @@ class NodeInfluence:
             edges_slice = edges.loc[list((edges.loc[:,self.edgeu] == node) | (edges.loc[:,self.edgev] == node)),:]
             inf_list = []
             for j in range(len(edges_slice)):
-                e = edges_slice.iloc[j,:]
-                influence = e['influence']
-                influence = influence if e.loc[:,self.edgeu] == node else -influence
+                e = edges_slice.iloc[[j],:]
+                influence = e['influence'].values
+                influence = influence if e.loc[:,self.edgeu].values == node else -influence
                 influence_sum += influence
                 inf_list.append(influence)
-            influence_scores.loc[i, 'influence'] = influence_sum/len(edges_slice)
+            
+            influence_scores.loc[[i], 'influence'] = influence_sum/len(edges_slice)
             
             if self.stats:
-                influence_scores.loc[i, 'n_peaks'] = number_of_peaks(inf_list)
-                influence_scores.loc[i, 'std'] = np.std(inf_list)
+                influence_scores.loc[[i], 'n_peaks'] = number_of_peaks(inf_list)
+                influence_scores.loc[[i], 'std'] = np.std(inf_list)
             
         return influence_scores
     
@@ -304,8 +311,8 @@ class NodeInfluence:
         n_workers = psutil.cpu_count(logical=False) if n_workers == None else n_workers
         available = psutil.virtual_memory()[1]
         
-        nodes_list = list(set(self.E.loc[:,self.edgeu].tolist() +
-                        self.E.loc[:,self.edgev].tolist()))
+        nodes_list = np.array(list(set(self.E.loc[:,self.edgeu].tolist() +
+                        self.E.loc[:,self.edgev].tolist())))
         size = len(nodes_list)
         load = int(size/n_workers)
     
@@ -327,12 +334,12 @@ class NodeInfluence:
             start_index = (n_workers - 1)*load
             nindexes.append([start_index, len(nodes_list) - 1])
         
-        influence_scores = ray.get([self.job.remote(nodes_list_id,E_id,i) \
+        influence_scores = ray.get([self.job.remote(self,nodes_list_id,E_id,i) \
                        for i in nindexes])
 
         ray.shutdown()
         
-        influence_scores = pd.concat([influence_scores], ignore_index = True)
+        influence_scores = pd.concat([df for df in influence_scores], ignore_index = True)
         
         return influence_scores
     
