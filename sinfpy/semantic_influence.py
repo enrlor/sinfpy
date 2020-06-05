@@ -77,11 +77,11 @@ class EdgeInfluence:
 
     
     def checkdata(self):
-        if not isinstance(self.threshold, np.float64) :
+        if not isinstance(self.threshold, float) :
             raise TypeError('threshold should be a float.')
         if not isinstance(self.balance, bool):
             raise TypeError('balance_inf should be a boolean.')
-        if not isinstance(self.penality, np.float64):
+        if not isinstance(self.penality, float):
             raise TypeError('penality should be a float.')
 
         if not isinstance(self.X, pd.DataFrame):
