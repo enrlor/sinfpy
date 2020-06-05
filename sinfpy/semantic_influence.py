@@ -75,7 +75,7 @@ class EdgeInfluence:
 
         self.checkdata()
 
-        self.E.set_index([edge_u,edge_v], inplce = True)
+        self.E.set_index([edge_u,edge_v], inplace = True)
 
     
     def checkdata(self):
