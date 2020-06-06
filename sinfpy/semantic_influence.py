@@ -290,7 +290,7 @@ class NodeInfluence:
             inf_list = []
             for j in range(len(edges_slice)):
                 e = edges_slice.iloc[[j],:]
-                influence = e['influence'].values
+                influence = e['influence'].values[0]
                 influence = influence if e.loc[:,self.edgeu].values == node else -influence
                 influence_sum += influence
                 inf_list.append(influence)

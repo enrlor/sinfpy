@@ -72,11 +72,11 @@ if __name__ == '__main__':
     print('EDGE INFLUENCES COMPUTED')
 
     print(updated_E)
-    
+
     with pd.HDFStore(fout, mode = 'w') as hdf:
         hdf.put('edges', updated_E, format = 'table', data_columns = True)
 
-    ni = sinf.NodeInfluence(updated_E, stats = False)
+    ni = sinf.NodeInfluence(updated_E, stats = True)
     influences = ni()
     print('NODE INFLUENCE COMPUTED')
 

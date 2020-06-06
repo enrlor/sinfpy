@@ -11,9 +11,9 @@ from scipy.spatial import distance
 #euclidean (for euclidean distance), or manhattan (for manhattan distance).
 def similarity_fun(method = 'cosine'):
     if method == 'euclidean':
-        return lambda a,b : distance.euclidean(a,b)
+        return lambda a,b : 1 - distance.euclidean(a,b)
     if method == 'manhattan':
-        return lambda a,b : distance.euclidean(a,b)
+        return lambda a,b : 1 - distance.euclidean(a,b)
     if method == 'cosine':
         return lambda a,b : np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
     else:
